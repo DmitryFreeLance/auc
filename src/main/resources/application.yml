@@ -1,0 +1,33 @@
+spring:
+  datasource:
+    url: jdbc:sqlite:${SQLITE_PATH:./data/auction.db}?busy_timeout=10000&journal_mode=WAL&synchronous=NORMAL&foreign_keys=on
+    driver-class-name: org.sqlite.JDBC
+    hikari:
+      maximum-pool-size: 1
+      minimum-idle: 1
+      connection-timeout: 30000
+  jpa:
+    hibernate.ddl-auto: update
+    open-in-view: false
+    database-platform: org.hibernate.community.dialect.SQLiteDialect
+    properties:
+      hibernate.jdbc.time_zone: UTC
+  servlet.multipart:
+    max-file-size: 250MB
+    max-request-size: 500MB
+server:
+  forward-headers-strategy: framework
+  servlet.session.cookie:
+    same-site: ${COOKIE_SAME_SITE:lax}
+    secure: ${COOKIE_SECURE:false}
+management.endpoints.web.exposure.include: health,info
+auction:
+  bot-token: ${MAX_BOT_TOKEN:}
+  bot-username: ${MAX_BOT_USERNAME:autoauction_bot}
+  public-url: ${PUBLIC_URL:http://localhost:8080}
+  webhook-secret: ${MAX_WEBHOOK_SECRET:}
+  admin-max-ids: ${ADMIN_MAX_IDS:1000001}
+  super-admin-max-ids: ${SUPER_ADMIN_MAX_IDS:1000001}
+  demo-auth: ${DEMO_AUTH:true}
+  max-auth-age: 24h
+  upload-dir: ${UPLOAD_DIR:./data/uploads}

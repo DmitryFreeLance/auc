@@ -1,0 +1,41 @@
+package ru.autoauction.service;
+
+import com.fasterxml.jackson.databind.*;
+import org.springframework.http.MediaType;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import ru.autoauction.config.AppProperties;
+import java.util.*;
+
+@Service
+public class MaxBotService {
+  private static final Logger log=LoggerFactory.getLogger(MaxBotService.class);
+  private final AppProperties props; private final RestClient client;
+  public MaxBotService(AppProperties props,RestClient.Builder builder){this.props=props;this.client=builder.baseUrl("https://platform-api2.max.ru").build();}
+  public boolean configured(){return props.botToken()!=null&&!props.botToken().isBlank();}
+  public void sendOpen(long userId){
+    String app=props.publicUrl();
+    Map<String,Object> button=new LinkedHashMap<>(); button.put("type","open_app");button.put("text","Открыть аукцион");button.put("web_app",app);button.put("contact_id",userId);
+    send(userId,"Добро пожаловать! Нажмите кнопку, чтобы открыть текущий аукцион.",List.of(Map.of("type","inline_keyboard","payload",Map.of("buttons",List.of(List.of(button))))));
+  }
+  public boolean sendText(long userId,String text){if(!configured())return false;send(userId,text,List.of());return true;}
+  @Async public void sendOutbid(long userId,String lotTitle,long currentPrice){
+    if(!configured())return;
+    try{
+      Map<String,Object> button=new LinkedHashMap<>();button.put("type","open_app");button.put("text","Вернуть лидерство");button.put("web_app",props.publicUrl());button.put("contact_id",userId);
+      String price=String.format(Locale.forLanguageTag("ru-RU"),"%,d ₽",currentPrice);
+      send(userId,"Вашу ставку на «"+lotTitle+"» перебили. Новая цена: "+price+".",List.of(Map.of("type","inline_keyboard","payload",Map.of("buttons",List.of(List.of(button))))));
+    }catch(Exception e){log.warn("Не удалось отправить уведомление о перебитой ставке пользователю {}: {}",userId,e.getMessage());}
+  }
+  private void send(long userId,String text,List<?> attachments){
+    if(!configured()) return;
+    client.post().uri(u->u.path("/messages").queryParam("user_id",userId).build()).header("Authorization",props.botToken()).contentType(MediaType.APPLICATION_JSON).body(Map.of("text",text,"attachments",attachments)).retrieve().toBodilessEntity();
+  }
+  public long extractUserId(JsonNode update){
+    long id=update.path("user").path("user_id").asLong(); if(id==0)id=update.path("user").path("id").asLong();
+    if(id==0)id=update.path("message").path("sender").path("user_id").asLong(); return id;
+  }
+}

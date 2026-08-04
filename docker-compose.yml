@@ -1,0 +1,21 @@
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    ports: ["127.0.0.1:${PORT:-8080}:8080"]
+    environment:
+      SQLITE_PATH: /app/data/auction.db
+      MAX_BOT_TOKEN: ${MAX_BOT_TOKEN:-}
+      MAX_BOT_USERNAME: ${MAX_BOT_USERNAME:-autoauction_bot}
+      MAX_WEBHOOK_SECRET: ${MAX_WEBHOOK_SECRET:-}
+      PUBLIC_URL: ${PUBLIC_URL:-http://localhost:8080}
+      ADMIN_MAX_IDS: ${ADMIN_MAX_IDS:-1000001}
+      SUPER_ADMIN_MAX_IDS: ${SUPER_ADMIN_MAX_IDS:-1000001}
+      DEMO_AUTH: ${DEMO_AUTH:-true}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      COOKIE_SAME_SITE: ${COOKIE_SAME_SITE:-lax}
+      UPLOAD_DIR: /app/data/uploads
+    volumes:
+      - auction_data:/app/data
+volumes:
+  auction_data:

@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="ru"><head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+  <meta name="theme-color" content="#f4f1ea"><title>Гараж — автомобильный аукцион</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+</head><body>
+<div id="toast" class="toast"></div>
+<div id="outbidAlert" class="outbid-alert hidden"><div><span>СТАВКА ПЕРЕБИТА</span><b>Другой участник сделал ставку выше</b><small id="outbidPrice"></small></div><button id="reBidBtn">Вернуть лидерство</button><button id="closeOutbid" class="close-alert">×</button></div>
+<div id="registration" class="modal hidden"><form id="registrationForm" class="modal-card"><span class="eyebrow">ДОБРО ПОЖАЛОВАТЬ</span><h2>Пара слов о вас</h2><p>Имя и телефон нужны для участия в торгах и связи после победы.</p><label>Имя<input name="name" minlength="2" required placeholder="Алексей"></label><label>Телефон<input name="phone" type="tel" required placeholder="+7 999 000-00-00"></label><button class="primary" type="submit">Продолжить</button></form></div>
+<div id="drawerBackdrop" class="backdrop hidden"></div>
+<aside id="drawer" class="drawer"><div class="brand"><span class="brand-mark">Г</span><div><b>Гараж</b><small>закрытые торги</small></div></div><nav><button data-page="auction" class="nav-link active"><span>⌁</span> Аукцион</button><button data-page="admin" id="adminNav" class="nav-link hidden"><span>⌘</span> Админ-панель</button></nav><div class="drawer-user"><div class="avatar" id="avatar">А</div><div><b id="drawerName">—</b><small id="drawerRole">Участник</small></div></div></aside>
+<main class="app-shell">
+  <header><button id="menuBtn" class="icon-btn" aria-label="Меню"><i></i><i></i></button><div class="logo">ГАРАЖ<span>АУКЦИОН</span></div><div id="livePill" class="live-pill"><i></i> LIVE</div></header>
+  <section id="auctionPage" class="page">
+    <div id="media" class="media"><div id="slides" class="slides"></div><div class="media-top"><span id="lotNumber" class="lot-tag">ЛОТ</span><span id="mediaCount">1 / 1</span></div><button id="prevSlide" class="slide-arrow left">‹</button><button id="nextSlide" class="slide-arrow right">›</button><div id="dots" class="dots"></div></div>
+    <article class="content">
+      <div class="title-row"><div><span class="eyebrow">СЕЙЧАС НА ТОРГАХ</span><h1 id="lotTitle">Загрузка…</h1><p class="meta" id="lotMeta"></p></div><button id="shareBtn" class="round-btn" aria-label="Поделиться">↗</button></div>
+      <div class="price-grid"><div><span>Текущая ставка</span><strong id="currentPrice">—</strong></div><div><span>Шаг ставки</span><strong id="bidStep">—</strong></div><div><span>Стартовая цена</span><strong id="startPrice">—</strong></div></div>
+      <div class="timer-card"><div><span id="timerLabel">ДО КОНЦА ТОРГОВ</span><div id="timer" class="timer"><b>00</b><em>:</em><b>00</b><em>:</em><b>00</b></div></div><div class="timer-ring"><svg viewBox="0 0 44 44"><circle cx="22" cy="22" r="18"/><circle id="progressCircle" cx="22" cy="22" r="18"/></svg></div></div>
+      <button id="bidBtn" class="bid-button"><span>Поднять ставку</span><b id="nextBid">—</b></button><div id="myBid" class="my-bid hidden">Ваша ставка <b>—</b><span>•</span><em>лидирует</em></div>
+      <div class="section-head"><h2>Об автомобиле</h2><button id="autotecaBtn" class="outline-btn">Автотека ↗</button></div><p id="description" class="description"></p><div class="details"><div><span>VIN</span><b id="vin">—</b></div><div><span>Пробег</span><b id="mileage">—</b></div></div>
+      <div class="safe-note"><span>✓</span><div><b>Безопасная ставка</b><p>Каждая ставка фиксируется с точным временем и идентификатором участника.</p></div></div>
+    </article>
+  </section>
+  <section id="adminPage" class="page hidden admin-page"><div class="admin-hero"><span class="eyebrow">ЦЕНТР УПРАВЛЕНИЯ</span><h1>Пульс аукциона</h1><p>Лоты, участники и активность в реальном времени.</p></div><div id="stats" class="stats"></div>
+    <div class="admin-tabs"><button class="active" data-tab="lots">Лоты</button><button data-tab="create">Новый лот</button><button data-tab="broadcast">Рассылка</button></div>
+    <div id="adminLots" class="admin-panel"></div>
+    <form id="createLot" class="admin-panel hidden form-grid"><h3>Создать новый лот</h3><label>Название<input name="title" required placeholder="Марка, модель, год"></label><label class="wide">Описание<textarea name="description" required rows="4"></textarea></label><label>VIN<input name="vin"></label><label>Пробег<input name="mileage" placeholder="38 400 км"></label><label>Начальная цена<input name="startingPrice" type="number" min="0" required></label><label>Шаг ставки<input name="bidStep" type="number" min="1" required></label><label>Длительность, минут<input name="durationMinutes" type="number" min="1" required value="60"></label><label>Ссылка на Автотеку<input name="autotecaUrl" type="url"></label><label class="wide file-input">Фото и видео<input name="media" type="file" multiple accept="image/*,video/*"><span>Выберите до нескольких файлов</span></label><label class="check wide"><input name="publish" type="checkbox" checked> Сразу запустить торги</label><button class="primary wide" type="submit">Создать лот</button></form>
+    <form id="broadcast" class="admin-panel hidden"><h3>Рассылка участникам</h3><p>Сообщение получат все зарегистрированные пользователи в MAX.</p><textarea name="text" maxlength="4000" rows="6" required placeholder="Новый лот уже доступен…"></textarea><button class="primary" type="submit">Отправить рассылку</button></form>
+  </section>
+</main><script src="/app.js"></script></body></html>
