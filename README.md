@@ -7,7 +7,7 @@
 - регистрация по имени и телефону после идентификации через MAX;
 - живой лот с медиаслайдером фото/видео, таймером и кнопкой ставки;
 - realtime-обновление через SSE и уведомление предыдущего лидера в MAX при перебитии ставки;
-- атомарные ставки: лот блокируется в БД на время транзакции;
+- последовательная запись ставок через единственное соединение с SQLite;
 - ссылка на отчёт «Автотека» для каждого автомобиля;
 - роли `USER`, `ADMIN`, `SUPER_ADMIN` по MAX ID;
 - админ-статистика, все ставки и участники, изменение шага в процессе торгов;
@@ -42,21 +42,20 @@ docker run -d --name auc-app --restart unless-stopped \
   -e PUBLIC_URL=https://auc.profishina.moscow \
   -e MAX_BOT_TOKEN=replace-me \
   -e MAX_BOT_USERNAME=replace-me \
-  -e MAX_WEBHOOK_SECRET=replace-me \
   -e ADMIN_MAX_IDS=123456789 \
   -e SUPER_ADMIN_MAX_IDS=123456789 \
   -e DEMO_AUTH=false -e COOKIE_SECURE=true -e COOKIE_SAME_SITE=none \
   -v auc-data:/app/data max-auto-auction:latest
 ```
 
-Production должен работать по HTTPS. Установите `DEMO_AUTH=false`, `COOKIE_SECURE=true` и надёжный `MAX_WEBHOOK_SECRET`. SQLite хранится в Docker volume по пути `/app/data/auction.db`.
+Production должен работать по HTTPS. Установите `DEMO_AUTH=false` и `COOKIE_SECURE=true`. SQLite хранится в Docker volume по пути `/app/data/auction.db`.
 
 ## Настройка MAX
 
 1. Создайте бота и Mini App на платформе MAX для партнёров, укажите `PUBLIC_URL` как URL мини-приложения.
-2. Зарегистрируйте HTTPS webhook `https://your-domain/api/max/webhook` для событий `bot_started` и `message_created`, передав такой же secret, как `MAX_WEBHOOK_SECRET`.
+2. Удалите активные webhook-подписки бота: при наличии webhook MAX не выдаёт события через Long Polling.
 3. Укажите MAX ID администраторов в `ADMIN_MAX_IDS` и супер-администраторов в `SUPER_ADMIN_MAX_IDS` через запятую.
-4. Перезапустите контейнер. При событии `bot_started` бот пришлёт кнопку типа `open_app`.
+4. Перезапустите контейнер. Фоновый Long Polling автоматически получает `bot_started` и `message_created`; на запуск, `/start` или «начать» бот пришлёт кнопку типа `open_app`.
 
 Backend валидирует подписанные MAX параметры по HMAC-SHA256 (`WebAppData`) и не доверяет произвольному ID из URL. `start_param` остаётся доступен как контекст запуска, но права определяются только по проверенному MAX ID.
 
@@ -64,8 +63,7 @@ Backend валидирует подписанные MAX параметры по 
 
 - `POST /api/auth/max`, `POST /api/auth/register`, `GET /api/auth/me`
 - `GET /api/lots/current`, `POST /api/lots/{id}/bids`
-- `GET /api/admin/stats`, `PATCH /api/admin/lots/{id}/step`
+- `GET /api/admin/stats`, `GET /api/admin/users`, `PATCH /api/admin/users/{id}/make-admin`
 - `POST /api/admin/lots` (multipart), `POST /api/admin/broadcast`
-- `POST /api/max/webhook`
 
 Загруженные медиа сохраняются в volume `/app/data/uploads`. Для промышленной эксплуатации их можно вынести в S3-совместимое хранилище; модель URL уже к этому готова.

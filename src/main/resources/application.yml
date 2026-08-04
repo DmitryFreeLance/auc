@@ -25,7 +25,6 @@ auction:
   bot-token: ${MAX_BOT_TOKEN:}
   bot-username: ${MAX_BOT_USERNAME:autoauction_bot}
   public-url: ${PUBLIC_URL:http://localhost:8080}
-  webhook-secret: ${MAX_WEBHOOK_SECRET:}
   admin-max-ids: ${ADMIN_MAX_IDS:1000001}
   super-admin-max-ids: ${SUPER_ADMIN_MAX_IDS:1000001}
   demo-auth: ${DEMO_AUTH:true}

@@ -7,7 +7,6 @@ services:
       SQLITE_PATH: /app/data/auction.db
       MAX_BOT_TOKEN: ${MAX_BOT_TOKEN:-}
       MAX_BOT_USERNAME: ${MAX_BOT_USERNAME:-autoauction_bot}
-      MAX_WEBHOOK_SECRET: ${MAX_WEBHOOK_SECRET:-}
       PUBLIC_URL: ${PUBLIC_URL:-http://localhost:8080}
       ADMIN_MAX_IDS: ${ADMIN_MAX_IDS:-1000001}
       SUPER_ADMIN_MAX_IDS: ${SUPER_ADMIN_MAX_IDS:-1000001}

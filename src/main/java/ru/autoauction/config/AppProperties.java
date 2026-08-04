@@ -6,7 +6,7 @@ import java.util.Set;
 
 @ConfigurationProperties("auction")
 public record AppProperties(
-    String botToken, String botUsername, String publicUrl, String webhookSecret,
+    String botToken, String botUsername, String publicUrl,
     Set<Long> adminMaxIds, Set<Long> superAdminMaxIds, boolean demoAuth,
     Duration maxAuthAge, String uploadDir) {
   public AppProperties {

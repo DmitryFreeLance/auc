@@ -7,6 +7,8 @@ RUN mvn -q -DskipTests package
 
 FROM eclipse-temurin:21-jre-alpine
 RUN addgroup -S auction && adduser -S auction -G auction && mkdir -p /app/data/uploads && chown -R auction:auction /app
+COPY deploy/certs/russian-trusted-root-ca.pem /tmp/russian-trusted-root-ca.pem
+RUN keytool -importcert -noprompt -trustcacerts -alias russian-trusted-root-ca -file /tmp/russian-trusted-root-ca.pem -keystore "$JAVA_HOME/lib/security/cacerts" -storepass changeit && rm /tmp/russian-trusted-root-ca.pem
 WORKDIR /app
 COPY --from=build /build/target/max-auto-auction-*.jar app.jar
 USER auction
