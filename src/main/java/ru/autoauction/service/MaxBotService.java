@@ -17,15 +17,14 @@ public class MaxBotService {
   public MaxBotService(AppProperties props,RestClient.Builder builder){this.props=props;this.client=builder.baseUrl("https://platform-api2.max.ru").build();}
   public boolean configured(){return props.botToken()!=null&&!props.botToken().isBlank();}
   public void sendOpen(long userId){
-    String app=props.publicUrl();
-    Map<String,Object> button=new LinkedHashMap<>(); button.put("type","open_app");button.put("text","Открыть аукцион");button.put("web_app",app);button.put("contact_id",userId);
+    Map<String,Object> button=Map.of("type","open_app","text","Открыть аукцион");
     send(userId,"Добро пожаловать! Нажмите кнопку, чтобы открыть текущий аукцион.",List.of(Map.of("type","inline_keyboard","payload",Map.of("buttons",List.of(List.of(button))))));
   }
   public boolean sendText(long userId,String text){if(!configured())return false;send(userId,text,List.of());return true;}
   @Async public void sendOutbid(long userId,String lotTitle,long currentPrice){
     if(!configured())return;
     try{
-      Map<String,Object> button=new LinkedHashMap<>();button.put("type","open_app");button.put("text","Вернуть лидерство");button.put("web_app",props.publicUrl());button.put("contact_id",userId);
+      Map<String,Object> button=Map.of("type","open_app","text","Вернуть лидерство");
       String price=String.format(Locale.forLanguageTag("ru-RU"),"%,d ₽",currentPrice);
       send(userId,"Вашу ставку на «"+lotTitle+"» перебили. Новая цена: "+price+".",List.of(Map.of("type","inline_keyboard","payload",Map.of("buttons",List.of(List.of(button))))));
     }catch(Exception e){log.warn("Не удалось отправить уведомление о перебитой ставке пользователю {}: {}",userId,e.getMessage());}
