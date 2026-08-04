@@ -11,7 +11,12 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 @Service
 public class AuctionEvents {
+  private static final long GLOBAL = -1L;
   private final Map<Long, CopyOnWriteArrayList<SseEmitter>> listeners = new ConcurrentHashMap<>();
+
+  public SseEmitter subscribeGlobal() {
+    return subscribe(GLOBAL);
+  }
 
   public SseEmitter subscribe(long lotId) {
     SseEmitter emitter = new SseEmitter(0L);
@@ -20,7 +25,7 @@ public class AuctionEvents {
     emitter.onCompletion(cleanup);
     emitter.onTimeout(cleanup);
     emitter.onError(ignored -> cleanup.run());
-    try { emitter.send(SseEmitter.event().name("connected").data(Map.of("lotId", lotId))); }
+    try { emitter.send(SseEmitter.event().name("connected").data(lotId == GLOBAL ? Map.of("scope", "auction") : Map.of("lotId", lotId))); }
     catch (IOException e) { cleanup.run(); }
     return emitter;
   }
@@ -28,6 +33,10 @@ public class AuctionEvents {
   public void bidUpdated(long lotId, long currentPrice, long leaderId) {
     send(lotId, SseEmitter.event().name("bid-updated")
         .data(Map.of("lotId", lotId, "currentPrice", currentPrice, "leaderId", leaderId)));
+  }
+
+  public void lotStarted(long lotId) {
+    send(GLOBAL, SseEmitter.event().name("lot-started").data(Map.of("lotId", lotId)));
   }
 
   @Scheduled(fixedRate = 15_000)

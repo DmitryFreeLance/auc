@@ -29,6 +29,19 @@ public class MaxBotService {
       send(userId,"Вашу ставку на «"+lotTitle+"» перебили. Новая цена: "+price+".",List.of(Map.of("type","inline_keyboard","payload",Map.of("buttons",List.of(List.of(button))))));
     }catch(Exception e){log.warn("Не удалось отправить уведомление о перебитой ставке пользователю {}: {}",userId,e.getMessage());}
   }
+  @Async public void sendAuctionStarted(List<Long> userIds,String lotTitle,long startingPrice){
+    if(!configured()||userIds.isEmpty())return;
+    String price=String.format(Locale.forLanguageTag("ru-RU"),"%,d ₽",startingPrice);
+    Map<String,Object> button=Map.of("type","open_app","text","Открыть аукцион","web_app",webAppName());
+    List<?> keyboard=List.of(Map.of("type","inline_keyboard","payload",Map.of("buttons",List.of(List.of(button)))));
+    int delivered=0;
+    for(long userId:userIds){
+      try{send(userId,"🚘 Новый лот уже в эфире!\n«"+lotTitle+"»\nСтартовая цена: "+price+". Успейте сделать ставку.",keyboard);delivered++;}
+      catch(Exception e){log.debug("Уведомление о старте не доставлено пользователю {}: {}",userId,e.getMessage());}
+      try{Thread.sleep(40);}catch(InterruptedException e){Thread.currentThread().interrupt();break;}
+    }
+    log.info("Уведомление о старте лота отправлено: {} из {}",delivered,userIds.size());
+  }
   private void send(long userId,String text,List<?> attachments){
     if(!configured()) return;
     client.post().uri(u->u.path("/messages").queryParam("user_id",userId).build()).header("Authorization",props.botToken()).contentType(MediaType.APPLICATION_JSON).body(Map.of("text",text,"attachments",attachments)).retrieve().toBodilessEntity();
