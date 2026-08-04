@@ -22,8 +22,22 @@ public class AdminController {
   private final CurrentUser current;private final LotRepository lots;private final BidRepository bids;private final UserRepository users;private final BroadcastRepository broadcasts;private final AuctionService auction;private final MaxBotService bot;private final AppProperties props;
   public AdminController(CurrentUser current,LotRepository lots,BidRepository bids,UserRepository users,BroadcastRepository broadcasts,AuctionService auction,MaxBotService bot,AppProperties props){this.current=current;this.lots=lots;this.bids=bids;this.users=users;this.broadcasts=broadcasts;this.auction=auction;this.bot=bot;this.props=props;}
   public record StepRequest(@Positive long step){} public record BroadcastRequest(@NotBlank @Size(max=4000) String text){}
+  public record AdminUserDto(Long id,Long maxUserId,String name,String phone,Role role,boolean registered,Instant createdAt,Instant lastSeenAt){
+    static AdminUserDto of(AppUser u){return new AdminUserDto(u.id,u.maxUserId,u.name,u.phone,u.role,u.registered,u.createdAt,u.lastSeenAt);}
+  }
   public record Stats(long users,long lots,long liveLots,long bids,long bidVolume,long broadcasts){}
   @GetMapping("/stats") public Stats stats(HttpSession s){current.requireAdmin(s);return new Stats(users.countByRegisteredTrue(),lots.count(),lots.countByStatus(LotStatus.LIVE),bids.count(),bids.totalBidVolume(),broadcasts.count());}
+  @GetMapping("/users") public List<AdminUserDto> users(HttpSession s){
+    current.requireAdmin(s);
+    return users.findAll().stream().sorted(Comparator.comparing((AppUser u)->u.registered).reversed().thenComparing(u->u.createdAt,Comparator.reverseOrder())).map(AdminUserDto::of).toList();
+  }
+  @PatchMapping("/users/{id}/make-admin") @Transactional public AdminUserDto makeAdmin(@PathVariable long id,HttpSession s){
+    current.requireSuperAdmin(s);
+    AppUser target=users.findById(id).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND,"Пользователь не найден"));
+    if(target.role==Role.SUPER_ADMIN)return AdminUserDto.of(target);
+    target.role=Role.ADMIN;
+    return AdminUserDto.of(users.save(target));
+  }
   @PatchMapping("/lots/{id}/step") public Map<String,Object> step(@PathVariable long id,@RequestBody StepRequest req,HttpSession s){current.requireAdmin(s);Lot l=auction.updateStep(id,req.step);return Map.of("id",l.id,"bidStep",l.bidStep);}
   @PatchMapping("/lots/{id}/status") public void status(@PathVariable long id,@RequestParam LotStatus value,HttpSession s){current.requireAdmin(s);Lot l=lots.findById(id).orElseThrow();l.status=value;lots.save(l);}
   @PostMapping("/broadcast") public BroadcastLog broadcast(@RequestBody BroadcastRequest req,HttpSession s){current.requireAdmin(s);List<AppUser> audience=users.findAll().stream().filter(u->u.registered).toList();int delivered=0;for(AppUser u:audience){try{if(bot.sendText(u.maxUserId,req.text))delivered++;}catch(Exception ignored){}}return broadcasts.save(new BroadcastLog(req.text,audience.size(),delivered));}

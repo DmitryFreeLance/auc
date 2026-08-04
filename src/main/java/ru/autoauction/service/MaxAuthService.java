@@ -41,7 +41,10 @@ public class MaxAuthService {
   }
   private AppUser upsert(long maxId,String name) {
     AppUser u=users.findByMaxUserId(maxId).orElseGet(()->new AppUser(maxId,name,role(maxId)));
-    u.name=name; u.lastSeenAt=Instant.now(); u.role=role(maxId); return users.save(u);
+    u.name=name; u.lastSeenAt=Instant.now();
+    if(props.superAdminMaxIds().contains(maxId)) u.role=Role.SUPER_ADMIN;
+    else if(props.adminMaxIds().contains(maxId) && u.role==Role.USER) u.role=Role.ADMIN;
+    return users.save(u);
   }
   private Role role(long id) { return props.superAdminMaxIds().contains(id)?Role.SUPER_ADMIN:props.adminMaxIds().contains(id)?Role.ADMIN:Role.USER; }
   private Map<String,String> parse(String raw) {
