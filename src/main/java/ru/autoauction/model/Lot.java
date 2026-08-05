@@ -13,6 +13,13 @@ public class Lot {
   @Column(nullable=false, length=5000) public String description;
   public String vin;
   public String mileage;
+  public Integer ownersCount;
+  public String engineNumber;
+  public String fuelType;
+  public String engineVolume;
+  public String horsepower;
+  public String transmission;
+  public String driveType;
   public String autotecaUrl;
   @Column(nullable=false) public long startingPrice;
   @Column(nullable=false) public long currentPrice;
