@@ -8,6 +8,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import ru.autoauction.config.AppProperties;
 import ru.autoauction.model.*;
 import ru.autoauction.repo.*;
@@ -20,6 +22,7 @@ import static ru.autoauction.web.ApiDtos.*;
 
 @RestController @RequestMapping("/api/admin")
 public class AdminController {
+  private static final Logger log=LoggerFactory.getLogger(AdminController.class);
   private final CurrentUser current;private final LotRepository lots;private final BidRepository bids;private final UserRepository users;private final BroadcastRepository broadcasts;private final AuctionService auction;private final MaxBotService bot;private final AppProperties props;private final ApplicationEventPublisher eventPublisher;private final ImageStorageService images;
   public AdminController(CurrentUser current,LotRepository lots,BidRepository bids,UserRepository users,BroadcastRepository broadcasts,AuctionService auction,MaxBotService bot,AppProperties props,ApplicationEventPublisher eventPublisher,ImageStorageService images){this.current=current;this.lots=lots;this.bids=bids;this.users=users;this.broadcasts=broadcasts;this.auction=auction;this.bot=bot;this.props=props;this.eventPublisher=eventPublisher;this.images=images;}
   public record StepRequest(@Positive long step){} public record BroadcastRequest(@NotBlank @Size(max=4000) String text){}
@@ -33,11 +36,13 @@ public class AdminController {
     return users.findAll().stream().filter(u->!isDemoUser(u)).sorted(Comparator.comparing((AppUser u)->u.registered).reversed().thenComparing(u->u.createdAt,Comparator.reverseOrder())).map(AdminUserDto::of).toList();
   }
   @PatchMapping("/users/{id}/make-admin") @Transactional public AdminUserDto makeAdmin(@PathVariable long id,HttpSession s){
-    current.requireSuperAdmin(s);
+    AppUser actor=current.requireSuperAdmin(s);
     AppUser target=users.findById(id).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND,"Пользователь не найден"));
     if(target.role==Role.SUPER_ADMIN)return AdminUserDto.of(target);
     target.role=Role.ADMIN;
-    return AdminUserDto.of(users.save(target));
+    AppUser saved=users.save(target);
+    log.info("Пользователь MAX {} назначен администратором пользователем MAX {}",saved.maxUserId,actor.maxUserId);
+    return AdminUserDto.of(saved);
   }
   @PatchMapping("/lots/{id}/step") public Map<String,Object> step(@PathVariable long id,@RequestBody StepRequest req,HttpSession s){current.requireAdmin(s);Lot l=auction.updateStep(id,req.step);return Map.of("id",l.id,"bidStep",l.bidStep);}
   @PatchMapping("/lots/{id}/status") @Transactional public void status(@PathVariable long id,@RequestParam LotStatus value,HttpSession s){current.requireAdmin(s);Lot l=lots.findById(id).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND,"Лот не найден"));boolean launching=l.status!=LotStatus.LIVE&&value==LotStatus.LIVE;if(launching){ensureNoActiveLot(l.id);Duration duration=Duration.between(l.startsAt,l.endsAt);if(duration.isNegative()||duration.isZero())duration=Duration.ofHours(1);l.startsAt=Instant.now();l.endsAt=l.startsAt.plus(duration);}l.status=value;lots.save(l);if(launching)eventPublisher.publishEvent(new LotStartedEvent(l.id,l.title,l.startingPrice));}

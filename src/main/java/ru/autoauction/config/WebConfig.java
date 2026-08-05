@@ -16,6 +16,6 @@ public class WebConfig implements WebMvcConfigurer {
     CacheControl immutable=CacheControl.maxAge(Duration.ofDays(365)).cachePublic().immutable();
     registry.addResourceHandler("/uploads/**").addResourceLocations(location).setCacheControl(immutable);
     registry.addResourceHandler("/assets/**").addResourceLocations("classpath:/static/assets/").setCacheControl(immutable);
-    registry.addResourceHandler("/styles.css","/app.js").addResourceLocations("classpath:/static/").setCacheControl(immutable);
+    registry.addResourceHandler("/","/index.html","/styles.css","/app.js").addResourceLocations("classpath:/static/").setCacheControl(CacheControl.noCache().mustRevalidate());
   }
 }
