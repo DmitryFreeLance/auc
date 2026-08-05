@@ -4,7 +4,7 @@ import ru.autoauction.model.Bid;
 import java.util.*;
 public interface BidRepository extends JpaRepository<Bid,Long> {
   @EntityGraph(attributePaths="user") List<Bid> findByLotIdOrderByCreatedAtDesc(Long lotId);
-  @EntityGraph(attributePaths="lot") List<Bid> findByUserIdOrderByCreatedAtDesc(Long userId);
+  @EntityGraph(attributePaths={"lot","lot.media"}) List<Bid> findByUserIdOrderByCreatedAtDesc(Long userId);
   @EntityGraph(attributePaths="user") Optional<Bid> findFirstByLotIdOrderByAmountDescCreatedAtAsc(Long lotId);
   long countByLotId(Long lotId);
   long countByUserId(Long userId);

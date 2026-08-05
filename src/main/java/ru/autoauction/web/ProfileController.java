@@ -4,6 +4,7 @@ import jakarta.servlet.http.HttpSession;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.transaction.annotation.Transactional;
 import ru.autoauction.model.*;
 import ru.autoauction.repo.BidRepository;
 import ru.autoauction.service.CurrentUser;
@@ -25,6 +26,7 @@ public class ProfileController {
   }
 
   @GetMapping
+  @Transactional(readOnly = true)
   public ProfileDto profile(HttpSession session) {
     AppUser user = current.requireRegistered(session);
     List<Bid> ownBids = bids.findByUserIdOrderByCreatedAtDesc(user.id);
