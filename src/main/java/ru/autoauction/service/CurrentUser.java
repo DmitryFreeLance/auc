@@ -15,7 +15,9 @@ public class CurrentUser {
   public AppUser require(HttpSession session) {
     Object id=session.getAttribute(SESSION_KEY);
     if (!(id instanceof Long)) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,"Откройте приложение из MAX");
-    return users.findById((Long)id).orElseThrow(()->new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+    AppUser user=users.findById((Long)id).orElseThrow(()->new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+    if(Boolean.TRUE.equals(user.banned))throw new ResponseStatusException(HttpStatus.FORBIDDEN,"Доступ к приложению ограничен администратором");
+    return user;
   }
   public AppUser requireRegistered(HttpSession session) {
     AppUser u=require(session);

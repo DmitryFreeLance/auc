@@ -3,6 +3,7 @@ package ru.autoauction.service;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 class AuctionEventsTest {
   @Test
@@ -19,5 +20,11 @@ class AuctionEventsTest {
     assertEquals(1L, events.onlineUsers(202L));
     assertEquals(2L, events.onlineByLot().get(101L));
     assertEquals(1L, events.onlineByLot().get(202L));
+
+    events.disconnectUser(20L);
+
+    assertEquals(1L, events.onlineUsers());
+    assertEquals(1L, events.onlineUsers(101L));
+    assertNull(events.onlineByLot().get(202L));
   }
 }

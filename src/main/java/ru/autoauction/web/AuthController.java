@@ -3,7 +3,9 @@ package ru.autoauction.web;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 import ru.autoauction.model.AppUser;
 import ru.autoauction.repo.UserRepository;
 import ru.autoauction.service.*;
@@ -21,5 +23,5 @@ public class AuthController {
   @GetMapping("/me") public UserDto me(HttpSession s){return UserDto.of(current.require(s));}
   @PostMapping("/register") public UserDto register(@Valid @RequestBody Registration req,HttpSession s){AppUser u=current.require(s);u.name=req.name.trim();u.phone=req.phone.replaceAll("[ ()-]","");u.registered=true;return UserDto.of(users.save(u));}
   @PostMapping("/logout") public void logout(HttpSession s){s.invalidate();}
-  private UserDto login(AppUser u,HttpSession s){s.setAttribute(CurrentUser.SESSION_KEY,u.id);return UserDto.of(u);}
+  private UserDto login(AppUser u,HttpSession s){if(Boolean.TRUE.equals(u.banned))throw new ResponseStatusException(HttpStatus.FORBIDDEN,"Доступ к приложению ограничен администратором");s.setAttribute(CurrentUser.SESSION_KEY,u.id);return UserDto.of(u);}
 }

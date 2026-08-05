@@ -6,9 +6,9 @@ import java.util.*;
 
 public final class ApiDtos {
   private ApiDtos(){}
-  public record UserDto(Long id,Long maxUserId,String name,String phone,Role role,boolean registered) { public static UserDto of(AppUser u){return new UserDto(u.id,u.maxUserId,u.name,u.phone,u.role,u.registered);} }
+  public record UserDto(Long id,Long maxUserId,String name,String phone,Role role,boolean registered,boolean banned) { public static UserDto of(AppUser u){return new UserDto(u.id,u.maxUserId,u.name,u.phone,u.role,u.registered,Boolean.TRUE.equals(u.banned));} }
   public record MediaDto(Long id,String url,String type){}
-  public record LotDto(Long id,String title,String description,String vin,String mileage,Integer ownersCount,String engineNumber,String fuelType,String engineVolume,String horsepower,String transmission,String driveType,String autotecaUrl,long startingPrice,long currentPrice,long bidStep,Instant startsAt,Instant endsAt,LotStatus status,List<MediaDto> media,long bids,long participants,long online,Long leaderId,String leaderName,Long myBid){}
+  public record LotDto(Long id,String title,String description,String vin,String mileage,Integer ownersCount,String engineNumber,String fuelType,String engineVolume,String horsepower,String transmission,String driveType,String autotecaUrl,long startingPrice,long currentPrice,long bidStep,Instant startsAt,Instant endsAt,LotStatus status,List<MediaDto> media,long bids,long participants,long online,Long leaderId,String leaderName,String leaderPhone,Long myBid){}
   public record AuctionHistoryDto(Long id,String title,String mileage,Instant endedAt,long finalPrice,String winnerName,String imageUrl,long bids){}
   public record ProfileAuctionDto(Long lotId,String title,String imageUrl,LotStatus status,Instant lastBidAt,Instant endsAt,long myBestBid,long finalPrice,long myBids,boolean winner,boolean leading){}
   public record ProfileDto(UserDto user,Instant memberSince,long totalBids,long auctionsParticipated,long wins,long winningVolume,List<ProfileAuctionDto> auctions){}

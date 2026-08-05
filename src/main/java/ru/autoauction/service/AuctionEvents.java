@@ -59,6 +59,10 @@ public class AuctionEvents {
     return result;
   }
 
+  public void disconnectUser(long userId) {
+    listeners.forEach((lotId,connections)->connections.stream().filter(listener->listener.userId()==userId).toList().forEach(listener->{remove(lotId,listener);try{listener.emitter().complete();}catch(Exception ignored){}}));
+  }
+
   @Scheduled(fixedRate = 15_000)
   public void keepAlive() {
     listeners.forEach((lotId, connections) -> connections.forEach(listener -> {

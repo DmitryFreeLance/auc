@@ -11,7 +11,9 @@
 - ссылка на отчёт «Автотека» для каждого автомобиля;
 - роли `USER`, `ADMIN`, `SUPER_ADMIN` по MAX ID;
 - админ-статистика, все ставки и участники, изменение шага в процессе торгов;
-- создание лота с несколькими фото/видео и запуском по таймеру;
+- создание нескольких лотов, отдельная загрузка фото/видео и последующее редактирование;
+- фото лота, имя и полный телефон лидера/победителя в админ-панели;
+- бан и разбан участников с немедленным закрытием доступа к Mini App;
 - рассылка зарегистрированным участникам через MAX Bot API;
 - SQLite в WAL-режиме: отдельный сервер базы данных не требуется.
 
@@ -34,17 +36,20 @@ docker compose up --build -d
 Или одним контейнером после `docker build -t max-auto-auction:latest .`:
 
 ```bash
-docker volume create auc-data
-docker run -d --name auc-app --restart unless-stopped \
-  -p 127.0.0.1:8080:8080 \
-  -e SQLITE_PATH=/app/data/auction.db \
-  -e UPLOAD_DIR=/app/data/uploads \
-  -e PUBLIC_URL=https://auc.profishina.moscow \
-  -e MAX_BOT_TOKEN=replace-me \
-  -e MAX_BOT_USERNAME=replace-me \
-  -e ADMIN_MAX_IDS=123456789 \
-  -e SUPER_ADMIN_MAX_IDS=123456789 \
-  -e DEMO_AUTH=false -e COOKIE_SECURE=true -e COOKIE_SAME_SITE=none \
+docker volume inspect auc-data >/dev/null 2>&1 || docker volume create auc-data
+docker run -d --name max-auto-auction --restart unless-stopped \
+  -p 127.0.0.1:8083:8080 \
+  -e TZ='Asia/Novosibirsk' \
+  -e SQLITE_PATH='/app/data/auction.db' \
+  -e UPLOAD_DIR='/app/data/uploads' \
+  -e PUBLIC_URL='https://auc.profishina.moscow' \
+  -e MAX_BOT_TOKEN='replace-me' \
+  -e MAX_BOT_USERNAME='replace-me' \
+  -e ADMIN_MAX_IDS='' \
+  -e SUPER_ADMIN_MAX_IDS='123456789' \
+  -e DEMO_AUTH='false' \
+  -e COOKIE_SECURE='true' \
+  -e COOKIE_SAME_SITE='none' \
   -v auc-data:/app/data max-auto-auction:latest
 ```
 
@@ -64,6 +69,9 @@ Backend валидирует подписанные MAX параметры по 
 - `POST /api/auth/max`, `POST /api/auth/register`, `GET /api/auth/me`
 - `GET /api/lots/current`, `POST /api/lots/{id}/bids`
 - `GET /api/admin/stats`, `GET /api/admin/users`, `PATCH /api/admin/users/{id}/make-admin`
-- `POST /api/admin/lots` (multipart), `POST /api/admin/broadcast`
+- `PATCH /api/admin/users/{id}/ban`
+- `POST /api/admin/lots` (JSON), `PUT /api/admin/lots/{id}`
+- `POST /api/admin/lots/{id}/media`, `DELETE /api/admin/lots/{id}/media/{mediaId}`
+- `POST /api/admin/broadcast`
 
 Загруженные медиа сохраняются в volume `/app/data/uploads`. Для промышленной эксплуатации их можно вынести в S3-совместимое хранилище; модель URL уже к этому готова.

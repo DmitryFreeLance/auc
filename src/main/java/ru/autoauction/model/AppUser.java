@@ -10,6 +10,8 @@ public class AppUser {
   @Column(nullable=false) public String name;
   public String phone;
   @Enumerated(EnumType.STRING) @Column(nullable=false) public Role role = Role.USER;
+  public Boolean banned = false;
+  public Instant bannedAt;
   @Column(nullable=false) public boolean registered;
   @Column(nullable=false) public Instant createdAt = Instant.now();
   public Instant lastSeenAt = Instant.now();
