@@ -1,17 +1,22 @@
 package ru.autoauction.service;
 
 import jakarta.servlet.http.HttpSession;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ResponseStatusException;
 import ru.autoauction.model.*;
 import ru.autoauction.repo.UserRepository;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 
 @Component
 public class CurrentUser {
   public static final String SESSION_KEY="userId";
+  public static final String ADMIN_TOKEN_KEY="adminAccessToken";
   private final UserRepository users;
-  public CurrentUser(UserRepository users) { this.users=users; }
+  private final HttpServletRequest request;
+  public CurrentUser(UserRepository users,HttpServletRequest request) { this.users=users;this.request=request; }
   public AppUser require(HttpSession session) {
     Object id=session.getAttribute(SESSION_KEY);
     if (!(id instanceof Long)) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,"Откройте приложение из MAX");
@@ -26,12 +31,11 @@ public class CurrentUser {
   }
   public AppUser requireAdmin(HttpSession session) {
     AppUser u=requireRegistered(session);
-    if(u.role==Role.USER) throw new ResponseStatusException(HttpStatus.FORBIDDEN,"Недостаточно прав");
+    Object expected=session.getAttribute(ADMIN_TOKEN_KEY);String supplied=request.getHeader("X-Admin-Session");
+    if(!(expected instanceof String token)||supplied==null||!MessageDigest.isEqual(token.getBytes(StandardCharsets.UTF_8),supplied.getBytes(StandardCharsets.UTF_8)))throw new ResponseStatusException(HttpStatus.FORBIDDEN,"Введите пароль администратора");
     return u;
   }
   public AppUser requireSuperAdmin(HttpSession session) {
-    AppUser u=requireAdmin(session);
-    if(u.role!=Role.SUPER_ADMIN) throw new ResponseStatusException(HttpStatus.FORBIDDEN,"Нужны права супер-администратора");
-    return u;
+    return requireAdmin(session);
   }
 }

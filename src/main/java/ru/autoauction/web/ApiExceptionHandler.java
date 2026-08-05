@@ -12,6 +12,7 @@ import org.springframework.web.multipart.MultipartException;
 import org.springframework.web.multipart.support.MissingServletRequestPartException;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.apache.catalina.connector.ClientAbortException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.Map;
@@ -27,6 +28,7 @@ import java.util.Map;
  @ExceptionHandler(HttpMessageNotReadableException.class) ResponseEntity<?> unreadable(){return ResponseEntity.badRequest().body(Map.of("message","Не удалось прочитать данные формы. Обновите страницу и попробуйте ещё раз"));}
  @ExceptionHandler(MethodArgumentTypeMismatchException.class) ResponseEntity<?> wrongType(){return ResponseEntity.badRequest().body(Map.of("message","Одно из полей заполнено неверно"));}
  @ExceptionHandler(AsyncRequestNotUsableException.class) void disconnectedClient(){}
+ @ExceptionHandler(ClientAbortException.class) void clientClosedMedia(){}
  @ExceptionHandler(NoResourceFoundException.class) ResponseEntity<Void> missingResource(){return ResponseEntity.notFound().build();}
  @ExceptionHandler(Exception.class) ResponseEntity<?> unexpected(Exception e){log.error("Необработанная ошибка API",e);return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("message","Не удалось выполнить действие. Попробуйте ещё раз"));}
 }

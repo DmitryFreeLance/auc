@@ -12,8 +12,11 @@
 - роли `USER`, `ADMIN`, `SUPER_ADMIN` по MAX ID;
 - админ-статистика, все ставки и участники, изменение шага в процессе торгов;
 - создание нескольких лотов, отдельная загрузка фото/видео и последующее редактирование;
+- перезапуск завершённого лота с начальными параметрами без потери истории прошлых торгов;
 - фото лота, имя и полный телефон лидера/победителя в админ-панели;
 - бан и разбан участников с немедленным закрытием доступа к Mini App;
+- адаптивный интерфейс для мобильного MAX и веб-версии;
+- вход в видимую всем админ-панель по отдельному паролю на один сеанс Mini App;
 - рассылка зарегистрированным участникам через MAX Bot API;
 - SQLite в WAL-режиме: отдельный сервер базы данных не требуется.
 
@@ -47,9 +50,11 @@ docker run -d --name max-auto-auction --restart unless-stopped \
   -e MAX_BOT_USERNAME='replace-me' \
   -e ADMIN_MAX_IDS='' \
   -e SUPER_ADMIN_MAX_IDS='123456789' \
+  -e ADMIN_ACCESS_PASSWORD='replace-with-a-strong-password' \
   -e DEMO_AUTH='false' \
   -e COOKIE_SECURE='true' \
   -e COOKIE_SAME_SITE='none' \
+  -e COOKIE_PARTITIONED='true' \
   -v auc-data:/app/data max-auto-auction:latest
 ```
 
@@ -72,6 +77,7 @@ Backend валидирует подписанные MAX параметры по 
 - `PATCH /api/admin/users/{id}/ban`
 - `POST /api/admin/lots` (JSON), `PUT /api/admin/lots/{id}`
 - `POST /api/admin/lots/{id}/media`, `DELETE /api/admin/lots/{id}/media/{mediaId}`
+- `POST /api/admin/lots/{id}/restart`
 - `POST /api/admin/broadcast`
 
 Загруженные медиа сохраняются в volume `/app/data/uploads`. Для промышленной эксплуатации их можно вынести в S3-совместимое хранилище; модель URL уже к этому готова.

@@ -20,6 +20,7 @@ server:
   servlet.session.cookie:
     same-site: ${COOKIE_SAME_SITE:lax}
     secure: ${COOKIE_SECURE:false}
+    partitioned: ${COOKIE_PARTITIONED:${COOKIE_SECURE:false}}
 management.endpoints.web.exposure.include: health,info
 auction:
   bot-token: ${MAX_BOT_TOKEN:}
@@ -30,3 +31,4 @@ auction:
   demo-auth: ${DEMO_AUTH:true}
   max-auth-age: 24h
   upload-dir: ${UPLOAD_DIR:./data/uploads}
+  admin-access-password: ${ADMIN_ACCESS_PASSWORD:}
