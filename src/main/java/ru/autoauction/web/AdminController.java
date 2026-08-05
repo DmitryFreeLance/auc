@@ -33,13 +33,16 @@ public class AdminController {
   public record Presence(long onlineUsers,Map<Long,Long> lots){}
   @GetMapping("/stats") public Stats stats(HttpSession s){current.requireAdmin(s);Instant now=Instant.now();long active=lots.findByStatusAndStartsAtLessThanEqualAndEndsAtGreaterThanOrderByEndsAtAsc(LotStatus.LIVE,now,now).size();long registered=users.findAll().stream().filter(u->u.registered&&!isDemoUser(u)).count();return new Stats(registered,events.onlineUsers(),lots.count(),active,bids.count(),bids.totalBidVolume(),broadcasts.count());}
   @GetMapping("/presence") public Presence presence(HttpSession s){current.requireAdmin(s);return new Presence(events.onlineUsers(),events.onlineByLot());}
-  @GetMapping("/users") public List<AdminUserDto> users(HttpSession s){
+  @GetMapping("/users") @Transactional public List<AdminUserDto> users(HttpSession s){
     current.requireAdmin(s);
-    return users.findAll().stream().filter(u->!isDemoUser(u)).sorted(Comparator.comparing((AppUser u)->u.registered).reversed().thenComparing(u->u.createdAt,Comparator.reverseOrder())).map(AdminUserDto::of).toList();
+    List<AppUser> all=users.findAll();
+    if(all.stream().mapToInt(u->synchronizeConfiguredRole(u)?1:0).sum()>0)users.saveAll(all);
+    return all.stream().filter(u->!isDemoUser(u)).sorted(Comparator.comparing((AppUser u)->u.registered).reversed().thenComparing(u->u.createdAt,Comparator.reverseOrder())).map(AdminUserDto::of).toList();
   }
   @PatchMapping("/users/{id}/make-admin") @Transactional public AdminUserDto makeAdmin(@PathVariable long id,HttpSession s){
     AppUser actor=current.requireSuperAdmin(s);
     AppUser target=users.findById(id).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND,"Пользователь не найден"));
+    synchronizeConfiguredRole(target);
     if(target.role==Role.SUPER_ADMIN)return AdminUserDto.of(target);
     target.role=Role.ADMIN;
     AppUser saved=users.save(target);
@@ -56,6 +59,7 @@ public class AdminController {
     if(media!=null){Path dir=Files.createDirectories(Path.of(props.uploadDir()).resolve(String.valueOf(l.id)));int i=0;for(MultipartFile f:media){if(f.isEmpty())continue;String type=Objects.requireNonNullElse(f.getContentType(),"");if(!type.startsWith("image/")&&!type.startsWith("video/"))throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Разрешены изображения и видео");String name;if(type.startsWith("image/"))name=images.store(f,dir,type);else{name=UUID.randomUUID()+fileExtension(f,type);Files.copy(f.getInputStream(),dir.resolve(name),StandardCopyOption.REPLACE_EXISTING);}l.media.add(new LotMedia(l,"/uploads/"+l.id+"/"+name,type.startsWith("video/")?"video":"image",i++));}}lots.save(l);if(publish)eventPublisher.publishEvent(new LotStartedEvent(l.id,l.title,l.startingPrice));return Map.of("id",l.id);
   }
   private String blankToNull(String value){return value==null||value.isBlank()?null:value.trim();}
+  private boolean synchronizeConfiguredRole(AppUser user){Role expected=props.superAdminMaxIds().contains(user.maxUserId)?Role.SUPER_ADMIN:props.adminMaxIds().contains(user.maxUserId)?Role.ADMIN:null;if(expected==null||user.role==expected)return false;user.role=expected;return true;}
   private String fileExtension(MultipartFile file,String type){String original=Objects.requireNonNullElse(file.getOriginalFilename(),"");int dot=original.lastIndexOf('.');if(dot>=0&&dot<original.length()-1){String ext=original.substring(dot).toLowerCase(Locale.ROOT);if(ext.matches("\\.(jpg|jpeg|png|webp|gif|mp4|mov|webm)"))return ext;}return type.startsWith("video/")?".mp4":".jpg";}
   private boolean isDemoUser(AppUser user){if(props.demoAuth()||props.adminMaxIds().contains(user.maxUserId)||props.superAdminMaxIds().contains(user.maxUserId))return false;return (user.maxUserId==1000001L&&"Алексей Воронцов".equals(user.name))||(user.maxUserId==1000002L&&"Мария Соколова".equals(user.name));}
 }
