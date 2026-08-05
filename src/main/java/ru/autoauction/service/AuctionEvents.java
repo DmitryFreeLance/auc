@@ -39,6 +39,10 @@ public class AuctionEvents {
     send(GLOBAL, SseEmitter.event().name("lot-started").data(Map.of("lotId", lotId)));
   }
 
+  public void lotCancelled(long lotId) {
+    send(GLOBAL, SseEmitter.event().name("lot-cancelled").data(Map.of("lotId", lotId)));
+  }
+
   @Scheduled(fixedRate = 15_000)
   public void keepAlive() {
     listeners.forEach((lotId, emitters) -> emitters.forEach(emitter -> {

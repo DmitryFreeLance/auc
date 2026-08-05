@@ -7,5 +7,6 @@ public interface BidRepository extends JpaRepository<Bid,Long> {
   @EntityGraph(attributePaths="lot") List<Bid> findByUserIdOrderByCreatedAtDesc(Long userId);
   @EntityGraph(attributePaths="user") Optional<Bid> findFirstByLotIdOrderByAmountDescCreatedAtAsc(Long lotId);
   long countByLotId(Long lotId);
+  long countByUserId(Long userId);
   @Query("select coalesce(sum(b.amount),0) from Bid b") long totalBidVolume();
 }

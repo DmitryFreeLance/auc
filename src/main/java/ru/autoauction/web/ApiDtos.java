@@ -12,7 +12,7 @@ public final class ApiDtos {
   public record AuctionHistoryDto(Long id,String title,String mileage,Instant endedAt,long finalPrice,String winnerName,String imageUrl,long bids){}
   public record ProfileAuctionDto(Long lotId,String title,String imageUrl,LotStatus status,Instant lastBidAt,Instant endsAt,long myBestBid,long finalPrice,long myBids,boolean winner,boolean leading){}
   public record ProfileDto(UserDto user,Instant memberSince,long totalBids,long auctionsParticipated,long wins,long winningVolume,List<ProfileAuctionDto> auctions){}
-  public record BidDto(Long id,long amount,Instant createdAt,Long userId,String userName,String maskedPhone){
-    public static BidDto of(Bid b){String p=b.user.phone;String masked=p==null?"—":p.replaceAll("(\\+?\\d{2})\\d+(\\d{2})","$1•••••••$2");return new BidDto(b.id,b.amount,b.createdAt,b.user.id,b.user.name,masked);}
+  public record BidDto(Long id,long amount,Instant createdAt,Long userId,String userName,String phone){
+    public static BidDto of(Bid b){return new BidDto(b.id,b.amount,b.createdAt,b.user.id,b.user.name,b.user.phone==null?"—":b.user.phone);}
   }
 }
