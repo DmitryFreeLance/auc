@@ -9,6 +9,7 @@ public class AppUser {
   @Column(nullable=false, unique=true) public Long maxUserId;
   @Column(nullable=false) public String name;
   public String phone;
+  public Boolean phoneVerified = false;
   @Enumerated(EnumType.STRING) @Column(nullable=false) public Role role = Role.USER;
   public Boolean banned = false;
   public Instant bannedAt;

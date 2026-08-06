@@ -31,4 +31,3 @@ auction:
   demo-auth: ${DEMO_AUTH:true}
   max-auth-age: 24h
   upload-dir: ${UPLOAD_DIR:./data/uploads}
-  admin-access-password: ${ADMIN_ACCESS_PASSWORD:}

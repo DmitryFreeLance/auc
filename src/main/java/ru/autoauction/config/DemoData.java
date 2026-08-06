@@ -14,9 +14,10 @@ public class DemoData implements CommandLineRunner {
   @Override @Transactional public void run(String... args){
     lots.findAll().stream().filter(this::isOldDemoLot).toList().forEach(lot->{bids.deleteAll(bids.findByLotIdOrderByCreatedAtDesc(lot.id));lots.delete(lot);});
     if(!props.demoAuth()){removeUnusedDemoUser(1000001L);removeUnusedDemoUser(1000002L);return;}
-    users.findByMaxUserId(1000001L).orElseGet(()->{AppUser u=new AppUser(1000001L,"Алексей Воронцов",Role.SUPER_ADMIN);u.phone="+79990001122";u.registered=true;return users.save(u);});
-    users.findByMaxUserId(1000002L).orElseGet(()->{AppUser u=new AppUser(1000002L,"Мария Соколова",Role.USER);u.phone="+79995557788";u.registered=true;return users.save(u);});
+    ensureDemoUser(1000001L,"Алексей Воронцов","+79990001122",Role.SUPER_ADMIN);
+    ensureDemoUser(1000002L,"Мария Соколова","+79995557788",Role.USER);
   }
   private void removeUnusedDemoUser(long maxUserId){if(props.adminMaxIds().contains(maxUserId)||props.superAdminMaxIds().contains(maxUserId))return;users.findByMaxUserId(maxUserId).filter(user->bids.countByUserId(user.id)==0).ifPresent(users::delete);}
+  private void ensureDemoUser(long maxUserId,String name,String phone,Role role){AppUser user=users.findByMaxUserId(maxUserId).orElseGet(()->new AppUser(maxUserId,name,role));user.name=name;user.phone=phone;user.phoneVerified=true;user.registered=true;user.role=role;users.save(user);}
   private boolean isOldDemoLot(Lot lot){return "Aurum E5 xDrive, 2021".equals(lot.title)&&"WBA••••••••74291".equals(lot.vin)&&lot.startingPrice==3_850_000;}
 }

@@ -19,14 +19,16 @@ public class MaxLongPollingService {
   private static final Logger log=LoggerFactory.getLogger(MaxLongPollingService.class);
   private final AppProperties props;
   private final MaxBotService bot;
+  private final BotRegistrationService registration;
   private final RestClient client;
   private final AtomicBoolean running=new AtomicBoolean();
   private volatile Thread worker;
   private volatile Long marker;
 
-  public MaxLongPollingService(AppProperties props,MaxBotService bot,RestClient.Builder builder){
+  public MaxLongPollingService(AppProperties props,MaxBotService bot,BotRegistrationService registration,RestClient.Builder builder){
     this.props=props;
     this.bot=bot;
+    this.registration=registration;
     this.client=builder.baseUrl("https://platform-api2.max.ru").build();
   }
 
@@ -71,19 +73,29 @@ public class MaxLongPollingService {
     String type=update.path("update_type").asText();
     String text=update.path("message").path("body").path("text").asText("").trim();
     boolean start="bot_started".equals(type)||("message_created".equals(type)&&(text.equalsIgnoreCase("начать")||text.toLowerCase(Locale.ROOT).startsWith("/start")));
-    if(!start)return;
+    JsonNode contact=findContact(update);
+    if(!start&&contact==null)return;
     long userId=bot.extractUserId(update);
     if(userId<=0){
       log.warn("MAX {} получен без user_id",type);
       return;
     }
     try{
-      bot.sendOpen(userId);
-      log.info("MAX: кнопка аукциона отправлена пользователю {}",userId);
+      String name=bot.extractUserName(update);
+      if(contact!=null){
+        try{registration.registerVerifiedContact(userId,name,contact.path("payload"));bot.sendOpenAfterRegistration(userId);log.info("MAX: пользователь {} подтвердил номер телефона",userId);}
+        catch(IllegalArgumentException e){log.warn("MAX: отклонён неподтверждённый контакт пользователя {}: {}",userId,e.getMessage());bot.sendContactRejected(userId);}
+        return;
+      }
+      var user=registration.observe(userId,name);
+      if(user.registered&&Boolean.TRUE.equals(user.phoneVerified)){bot.sendOpen(userId);log.info("MAX: кнопка аукциона отправлена пользователю {}",userId);}
+      else{bot.sendContactRequest(userId);log.info("MAX: пользователю {} запрошен подтверждённый номер телефона",userId);}
     }catch(Exception e){
       log.error("MAX: не удалось ответить пользователю {}: {}",userId,e.getMessage(),e);
     }
   }
+
+  private JsonNode findContact(JsonNode update){JsonNode attachments=update.path("message").path("body").path("attachments");if(!attachments.isArray())attachments=update.path("message").path("attachments");if(attachments.isArray())for(JsonNode attachment:attachments)if("contact".equals(attachment.path("type").asText()))return attachment;return null;}
 
   private void pause(long millis){
     try{Thread.sleep(millis);}catch(InterruptedException e){Thread.currentThread().interrupt();}

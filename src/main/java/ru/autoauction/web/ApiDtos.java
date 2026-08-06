@@ -6,7 +6,7 @@ import java.util.*;
 
 public final class ApiDtos {
   private ApiDtos(){}
-  public record UserDto(Long id,Long maxUserId,String name,String phone,Role role,boolean registered,boolean banned) { public static UserDto of(AppUser u){return new UserDto(u.id,u.maxUserId,u.name,u.phone,u.role,u.registered,Boolean.TRUE.equals(u.banned));} }
+  public record UserDto(Long id,Long maxUserId,String name,String phone,Role role,boolean registered,boolean banned) { public static UserDto of(AppUser u){return new UserDto(u.id,u.maxUserId,u.name,u.phone,u.role,u.registered&&Boolean.TRUE.equals(u.phoneVerified),Boolean.TRUE.equals(u.banned));} }
   public record MediaDto(Long id,String url,String type){}
   public record LotDto(Long id,String title,String description,String vin,String mileage,Integer ownersCount,String engineNumber,String fuelType,String engineVolume,String horsepower,String transmission,String driveType,String autotecaUrl,long startingPrice,long currentPrice,long bidStep,Instant startsAt,Instant endsAt,LotStatus status,List<MediaDto> media,long bids,long participants,long online,Long leaderId,String leaderName,String leaderPhone,Long myBid){}
   public record AuctionHistoryDto(Long id,String title,String mileage,Instant endedAt,long finalPrice,String winnerName,String imageUrl,long bids){}

@@ -17,8 +17,22 @@ public class MaxBotService {
   public MaxBotService(AppProperties props,RestClient.Builder builder){this.props=props;this.client=builder.baseUrl("https://platform-api2.max.ru").build();}
   public boolean configured(){return props.botToken()!=null&&!props.botToken().isBlank();}
   public void sendOpen(long userId){
+    sendOpen(userId,"Добро пожаловать! Нажмите кнопку, чтобы открыть текущий аукцион.");
+  }
+  public void sendOpenAfterRegistration(long userId){
+    sendOpen(userId,"Спасибо! Номер подтверждён. Теперь вы можете участвовать в аукционах.");
+  }
+  private void sendOpen(long userId,String text){
     Map<String,Object> button=Map.of("type","open_app","text","Открыть аукцион","web_app",webAppName());
-    send(userId,"Добро пожаловать! Нажмите кнопку, чтобы открыть текущий аукцион.",List.of(Map.of("type","inline_keyboard","payload",Map.of("buttons",List.of(List.of(button))))));
+    send(userId,text,List.of(Map.of("type","inline_keyboard","payload",Map.of("buttons",List.of(List.of(button))))));
+  }
+  public void sendContactRequest(long userId){
+    Map<String,Object> button=Map.of("type","request_contact","text","Поделиться телефоном");
+    send(userId,"Для участия в торгах подтвердите номер телефона, привязанный к вашему аккаунту MAX.",List.of(Map.of("type","inline_keyboard","payload",Map.of("buttons",List.of(List.of(button))))));
+  }
+  public void sendContactRejected(long userId){
+    Map<String,Object> button=Map.of("type","request_contact","text","Поделиться телефоном");
+    send(userId,"Не удалось подтвердить контакт. Нажмите кнопку ниже и отправьте номер, привязанный к вашему аккаунту MAX.",List.of(Map.of("type","inline_keyboard","payload",Map.of("buttons",List.of(List.of(button))))));
   }
   public boolean sendText(long userId,String text){if(!configured())return false;send(userId,text,List.of());return true;}
   @Async public void sendOutbid(long userId,String lotTitle,long currentPrice){
@@ -50,6 +64,7 @@ public class MaxBotService {
     long id=update.path("user").path("user_id").asLong(); if(id==0)id=update.path("user").path("id").asLong();
     if(id==0)id=update.path("message").path("sender").path("user_id").asLong(); return id;
   }
+  public String extractUserName(JsonNode update){JsonNode user=update.path("user");if(user.isMissingNode()||user.isNull())user=update.path("message").path("sender");String name=user.path("name").asText("").trim();if(!name.isBlank())return name;return (user.path("first_name").asText("")+" "+user.path("last_name").asText("")).trim();}
   private String webAppName(){
     String value=Objects.requireNonNullElse(props.botUsername(),"").trim();
     if(value.startsWith("@"))value=value.substring(1);

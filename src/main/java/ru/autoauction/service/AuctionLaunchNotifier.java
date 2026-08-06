@@ -25,7 +25,7 @@ public class AuctionLaunchNotifier {
   public void onLotStarted(LotStartedEvent event) {
     events.lotStarted(event.lotId());
     var recipients = users.findAll().stream()
-        .filter(user -> user.registered && !Boolean.TRUE.equals(user.banned) && !isDemoUser(user))
+        .filter(user -> user.registered && Boolean.TRUE.equals(user.phoneVerified) && !Boolean.TRUE.equals(user.banned) && !isDemoUser(user))
         .map(user -> user.maxUserId)
         .toList();
     bot.sendAuctionStarted(recipients, event.title(), event.startingPrice());
