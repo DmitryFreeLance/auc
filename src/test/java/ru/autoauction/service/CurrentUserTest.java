@@ -23,7 +23,7 @@ class CurrentUserTest {
     when(users.findById(7L)).thenReturn(Optional.of(user));
     MockHttpServletRequest request=new MockHttpServletRequest();
     MockHttpSession session=new MockHttpSession();session.setAttribute(CurrentUser.SESSION_KEY,7L);session.setAttribute(CurrentUser.ADMIN_TOKEN_KEY,"secret-session-token");
-    CurrentUser current=new CurrentUser(users,request);
+    CurrentUser current=new CurrentUser(users,request,mock(AdminAccessTokens.class));
 
     assertThrows(ResponseStatusException.class,()->current.requireAdmin(session));
 

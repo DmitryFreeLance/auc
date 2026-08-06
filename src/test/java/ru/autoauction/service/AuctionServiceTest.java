@@ -30,6 +30,7 @@ class AuctionServiceTest {
     when(lots.findById(7L)).thenReturn(Optional.of(lot));when(bids.findFirstByLotIdOrderByAmountDescCreatedAtAsc(7L)).thenReturn(Optional.empty());when(bids.save(any(Bid.class))).thenAnswer(invocation->invocation.getArgument(0));when(lots.save(any(Lot.class))).thenAnswer(invocation->invocation.getArgument(0));
   }
 
-  @Test void usesMinimumBidWhenRequestedAmountIsTooLow(){assertThat(service.placeBid(7L,user,4_130_000L).bid().amount).isEqualTo(4_170_000);}
-  @Test void roundsCustomBidUpByCurrentStep(){assertThat(service.placeBid(7L,user,4_234_000L).bid().amount).isEqualTo(4_270_000);}
+  @Test void alwaysUsesExactlyOneBidStep(){assertThat(service.placeBid(7L,user).bid().amount).isEqualTo(4_170_000);}
+  @Test void extendsAuctionByTwoMinutesInsideLastFiveMinutes(){lot.endsAt=Instant.now().plusSeconds(240);Instant previousEnd=lot.endsAt;service.placeBid(7L,user);assertThat(lot.endsAt).isEqualTo(previousEnd.plusSeconds(120));}
+  @Test void doesNotExtendAuctionBeforeLastFiveMinutes(){Instant previousEnd=lot.endsAt;service.placeBid(7L,user);assertThat(lot.endsAt).isEqualTo(previousEnd);}
 }
